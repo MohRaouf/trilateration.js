@@ -1,0 +1,96 @@
+  static double norm(Point a)
+        {
+            return Math.Sqrt(Math.Pow(a.x,2) + Math.Pow(a.y,2) + Math.Pow(a.z,2));
+        }
+        static double dot(Point a, Point b)
+
+        {
+            return a.x * b.x + a.y * b.y + a.z * b.z;
+        }
+        static Point vector_subtract(Point a, Point b)
+        {
+           return new Point(a.x - b.x, a.y - b.y, a.z - b.z,a.r);
+        }
+
+        static  Point vector_add(Point a, Point b)
+        {
+            return new Point(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+        static Point vector_divide(Point a, double b)
+        {
+            return new Point(a.x / b, a.y / b, a.z / b);
+        }
+
+        static Point vector_multiply(Point a,double b)
+        {
+            return new Point(a.x * b, a.y * b, a.z * b);
+        }
+        static Point vector_cross(Point a, Point b)
+        {
+            return new Point(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+        }
+        static double p2Xdist = 4;
+        static double p3Xdist = 2;
+        static double p3Ydist = 4;
+
+        static Point p1 = new Point(0, 0, 0);
+        static Point p2 = new Point(p2Xdist, 0, 0);
+        static Point p3 = new Point(p3Xdist, p3Ydist, 0);
+        public static Point[] trilaterate( double d1, double d2, double d3, bool return_middle)
+        {
+            // based on: https://en.wikipedia.org/wiki/Trilateration
+
+            // some additional local functions declared here for
+            // scalar and vector operations
+            p1.r = d1;
+            p2.r = d2;
+            p3.r = d3;
+
+            Point ex, ey, ez, a,p4;
+        
+            double i ,d,j,b,z, x,y;
+            ex = vector_divide(vector_subtract(p2, p1), norm(vector_subtract(p2, p1)));
+	
+	        i = dot(ex, vector_subtract(p3, p1));
+	        a = vector_subtract(vector_subtract(p3, p1), vector_multiply(ex, i));
+	        ey = vector_divide(a, norm(a));
+	        ez =  vector_cross(ex, ey);
+            d = norm(vector_subtract(p2, p1));
+	        j = dot(ey, vector_subtract(p3, p1));
+	
+	        x = (Math.Pow(p1.r,2) - Math.Pow(p2.r, 2) + Math.Pow(d, 2)) / (2 * d);
+	        y = (Math.Pow(p1.r, 2) - Math.Pow(p3.r, 2) + Math.Pow(i, 2) + Math.Pow(j, 2)) / (2 * j) - (i / j) * x;
+
+            b = Math.Pow(p1.r, 2) - Math.Pow(x, 2) - Math.Pow(y, 2);
+	
+	        // floating point math flaw in IEEE 754 standard
+	        // see https://github.com/gheja/trilateration.js/issues/2
+	        if (Math.Abs(b) < 0.0000000001)
+	        {
+		        b = 0;
+	        }
+
+            z = Math.Sqrt(b);
+	
+	        // no solution found
+	        if (z.ToString()=="NaN")
+	        {
+                z = 0;
+	        }
+
+            a = vector_add(p1, vector_add(vector_multiply(ex, x), vector_multiply(ey, y)));
+	        Point p4a = vector_add(a, vector_multiply(ez, z));
+	        Point  p4b = vector_subtract(a, vector_multiply(ez, z));
+	
+	        if (z == 0 || return_middle)
+	        {
+                Point[] result_points = { a, a };
+
+                return result_points;
+	        }
+	        else
+	        {
+                Point[] result_points = { p4a, p4b };
+		        return result_points;
+	        }
+}
